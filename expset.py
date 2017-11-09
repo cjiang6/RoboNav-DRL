@@ -26,6 +26,7 @@ DISPLAY_STEP = 1800  # Policy will be printed each DISPLAY_STEP step
 
 
 # Learning parameters -----------------------------------------------------
+ALGORITHM = "DQN" # Deep Q-learning 
 
 
 # Other parameters -------------------------------------------------------

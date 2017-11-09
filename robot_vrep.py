@@ -89,12 +89,13 @@ def disconnect():
 """ Start the simulation (force stop and setup)"""
 def start():    
     stop()
-    setup_devices()
-    vrep.simxStartSimulation(clientID, ONESHOT)
+    setup_devices()    
+    vrep.simxStartSimulation(clientID, ONESHOT)    
     time.sleep(0.5)
     # Solve a rare bug in the simulator by repeating:
     setup_devices()
     vrep.simxStartSimulation(clientID, ONESHOT)
+    print('Simulation started')
     time.sleep(0.5)
     return
     
@@ -140,8 +141,16 @@ def setup_devices():
     if HAS_KINECT:
         rc, resolution, image = vrep.simxGetVisionSensorImage(
             clientID, kinect_rgb_ID, 0, MODE_INI)
-        im = np.array(image, dtype=np.uint8)
-        im.resize([resolution[1], resolution[0], 3])
+        rc, resolution, depth = vrep.simxGetVisionSensorImage(
+            clientID, kinect_depth_ID, 0, MODE_INI)
+        # solve a bug by repeating
+        time.sleep(0.5)
+        rc, resolution, image = vrep.simxGetVisionSensorImage(
+            clientID, kinect_rgb_ID, 0, MODE_INI)
+        rc, resolution, depth = vrep.simxGetVisionSensorImage(
+            clientID, kinect_depth_ID, 0, MODE_INI)
+        #im = np.array(image, dtype=np.uint8)
+        #im.resize([resolution[1], resolution[0], 3])
         # plt.imshow(im, origin='lower')
         # return_code, resolution, depth = vrep.simxGetVisionSensorImage(
         #     clientID, kinect_depth_ID, 0, MODE_INI)
@@ -165,8 +174,10 @@ def get_image_rgb():
 """ get image Depth from a Kinect """
 def get_image_depth():
     rc, resolution, depth = vrep.simxGetVisionSensorImage(
-        clientID, kinect_depth_ID, 0, MODE)
-    de = np.array(depth)
+        clientID, kinect_depth_ID, 0, MODE)    
+    #de = np.array(depth)
+    de = np.array(depth, dtype=np.uint8)
+    de.resize([resolution[1], resolution[0], 3])
     return de
 
 
