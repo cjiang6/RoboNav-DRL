@@ -14,9 +14,11 @@ expset.ENVIRONMENT_TYPE = "VREP"
 expset.TASK_ID = "hallway"
 
 expset.N_REPETITIONS = 1
-expset.N_EPISODES = 1
-expset.N_STEPS = 60 * 60 
+expset.N_EPISODES = 50
+expset.N_STEPS = 100 
 
 expset.DISPLAY_STEP = 10
+
+expset.ALGORITHM = "DQN"
 
 robonav_drl.run()

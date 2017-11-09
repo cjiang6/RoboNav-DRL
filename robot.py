@@ -32,3 +32,9 @@ def connect():
 def start():
     link.start()
     return
+    
+
+""" Get visual ovservation from sensor """    
+def get_observation():
+    de = link.get_image_depth()
+    return de
