@@ -22,6 +22,26 @@ except KeyError:
 link = __import__(link_module)
 
 
+""" Relavent data of the robot and environment"""
+mobilebase_pose2d = np.full(3, -1, dtype=np.float64) # Robot pose [x(m), y(m), theta]
+goal_pose2d = np.full(2,-1, dtype=np.float64) # Goal position [x(m), y(m)]
+dist_obstacle = np.full(link.N_Ultrasonic, -1, dtype=np.float64) # Distance (m) to obstacles measured by ultrasonic sensors
+dist_goal = -1 # Distance (m) from robot to goal
+
+
+""" Initialize the robot """
+def setup():
+    global mobilebase_pose2d, goal_pose2d, dist_obstacle, dist_goal    
+    
+    mobilebase_pose2d = np.full(3, -1, dtype=np.float64)
+    goal_pose2d = np.full(2, -1, dtype=np.float64)
+    dist_obstacle = np.full(link.N_Ultrasonic, -1, dtype=np.float64) 
+    dist_goal = -1 
+    # get the first data of the robot and environment
+    update()
+    return
+
+
 """ Connect to the robot """
 def connect():
     link.connect()
@@ -34,7 +54,53 @@ def start():
     return
     
 
+""" Update relavent data of the robot and environment """
+def update():
+    global mobilebase_pose2d, goal_pose2d, dist_obstacle, dist_goal
+    
+    mobilebase_pose2d = get_mobilebase_pose2d()
+    goal_pose2d = get_goal_pose_2d()
+    dist_obstacle = get_distance_obstacle()
+    dist_goal = distance2d(np.array([mobilebase_pose2d[0], mobilebase_pose2d[1]]), goal_pose2d)
+    
+
+""" Calculate 2D distance between two pose """
+def distance2d(pose_a, pose_b):
+    delta_dist = abs(pose_a - pose_b)
+    dist = math.sqrt(delta_dist[0] ** 2 + delta_dist[1] ** 2)
+    return dist
+    
+
+
 """ Get visual ovservation from sensor """    
 def get_observation():
-    de = link.get_image_depth()
+    if expset.SENSOR_TYPE == 'KINECT':
+        de = link.get_image_depth()    
+    elif expset.SENSOR_TYPE == 'LASER':
+        pass
     return de
+    
+
+""" Return 2D pose of the mobilebase (x,y,theta) """
+def get_mobilebase_pose2d():
+    pos = link.get_mobilebase_pose2d()
+    return pos
+
+
+""" Return an array of distances measured by ultrasonic sensors (m) """
+def get_distance_obstacle():
+    dist = link.get_distance_obstacle()
+    return dist
+
+
+""" Returns the position of the goal object:  [ x(m), y(m), z(m) ] """
+def get_goal_pose_2d():
+    pos = link.get_goal_pose_2d()
+    return pos
+    
+    
+""" Move robot wheels """
+def move_wheels(left_wheel, right_wheel):
+    # input equivalent to discretized angular velocity
+    link.move_wheels(left_wheel, right_wheel)
+    return

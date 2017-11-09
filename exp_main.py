@@ -12,10 +12,11 @@ import robonav_drl
 
 expset.ENVIRONMENT_TYPE = "VREP"
 expset.TASK_ID = "hallway"
+expset.SENSOR_TYPE = "KINECT"
 
 expset.N_REPETITIONS = 1
-expset.N_EPISODES = 50
-expset.N_STEPS = 100 
+expset.N_EPISODES = 10000
+expset.N_STEPS = 60*60 
 
 expset.DISPLAY_STEP = 10
 

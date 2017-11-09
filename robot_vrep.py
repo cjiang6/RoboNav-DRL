@@ -10,18 +10,22 @@ import time
 
 import numpy as np
 
+import expset
 import vrep
 
 WAIT_RESPONSE = False  # True: Synchronous response (too much delay)
 
-LASER_DISTRIBUTION = ('sensor_front', 'sensor_front_left', 'sensor_left',
-                      'sensor_rear_left', 'sensor_rear', 'sensor_rear_right',
-                      'sensor_right', 'sensor_front_right')
+#LASER_DISTRIBUTION = ('sensor_front', 'sensor_front_left', 'sensor_left',
+#                      'sensor_rear_left', 'sensor_rear', 'sensor_rear_right',
+#                      'sensor_right', 'sensor_front_right')
 
 HAS_LASER = False
-HAS_KINECT = True
-
-
+HAS_KINECT = False
+if expset.SENSOR_TYPE == 'LASER':
+    HAS_LASER = True
+elif expset.SENSOR_TYPE == 'KINECT':
+    HAS_KINECT = True
+    
 # V-REP data transmission modes:
 WAIT = vrep.simx_opmode_oneshot_wait
 ONESHOT = vrep.simx_opmode_oneshot
@@ -35,23 +39,25 @@ else:
     MODE_INI = STREAMING
     MODE = BUFFER
 
-# Robot components 
-N_LASERS = 8  # 1 point laser each
+N_Ultrasonic = 16
 
 robotID = -1
-laserID = [-1] * N_LASERS
+ultrasonicID = [-1] * N_Ultrasonic
+laserID = -1
 left_motorID = -1
 right_motorID = -1
 clientID = -1
 
-kinect_rgb_ID = -1  # not used so far
-kinect_depth_ID = -1  # not used so far
+kinect_rgb_ID = -1  
+kinect_depth_ID = -1  
 
-distance = np.full(N_LASERS, -1, dtype=np.float64)  # distances from lasers (m)
+goalID = -1
+
+distance = np.full(N_Ultrasonic, -1, dtype=np.float64)  # distances from lasers (m)
 pose = np.full(3, -1, dtype=np.float64)  # Pose 2d base: x(m), y(m), theta(rad)
 
 
-""" send a message for printing in V-REP """
+""" Send a message for printing in V-REP """
 def show_msg(message):
     vrep.simxAddStatusbarMessage(clientID, message, WAIT)
     return
@@ -110,52 +116,66 @@ def stop():
 def setup_devices():
     global robotID, left_motorID, right_motorID, laserID
     global kinect_rgb_ID, kinect_depth_ID
+    global goalID
     # rc: return_code (not used)
     # robot
     rc, robotID = vrep.simxGetObjectHandle(clientID, 'robot', WAIT)
     # motors
     rc, left_motorID = vrep.simxGetObjectHandle(clientID, 'leftMotor', WAIT)
-    rc, right_motorID = vrep.simxGetObjectHandle(clientID, 'rightMotor', WAIT)    
+    rc, right_motorID = vrep.simxGetObjectHandle(clientID, 'rightMotor', WAIT)
+    # ultrasonic sensors
+    for idx in range(0, N_Ultrasonic):
+        item = 'ultrasonicSensor' + str(idx+1)
+        rc, ultrasonicID[idx] = vrep.simxGetObjectHandle(clientID, item, WAIT)
     # lasers
-    for idx, item in enumerate(LASER_DISTRIBUTION):
-        ec, laserID[idx] = vrep.simxGetObjectHandle(clientID, item, WAIT)    
+    if HAS_LASER:        
+        rc, laserID = vrep.simxGetObjectHandle(clientID, 'laser_2D', WAIT)    
     # Kinect
     if HAS_KINECT:
         rc, kinect_rgb_ID = vrep.simxGetObjectHandle(
             clientID, 'kinect_rgb', WAIT)
         rc, kinect_depth_ID = vrep.simxGetObjectHandle(
             clientID, 'kinect_depth', WAIT)
-
+    # goal
+    rc, goalID = vrep.simxGetObjectHandle(clientID, 'Ball', WAIT)
+    
     # start up devices
-
     # wheels
     vrep.simxSetJointTargetVelocity(clientID, left_motorID, 0, STREAMING)
     vrep.simxSetJointTargetVelocity(clientID, right_motorID, 0, STREAMING)
     # pose
     vrep.simxGetObjectPosition(clientID, robotID, -1, MODE_INI)
     vrep.simxGetObjectOrientation(clientID, robotID, -1, MODE_INI)
-    # distances from lasers
-    for i in laserID:
-        vrep.simxReadProximitySensor(clientID, i, MODE_INI)
-
+    # ultrasonic data
+    for i in range(0, N_Ultrasonic):
+        rc, ds, detected_point, doh, dsn = vrep.simxReadProximitySensor(
+            clientID, ultrasonicID[i], MODE_INI)
+        distance[i] = detected_point[2]
+    # laser scan
+    if HAS_LASER:
+        #vrep.simxReadProximitySensor(clientID, laserID, MODE_INI)
+        pass
+    # Kinect RGB and Depth
     if HAS_KINECT:
         rc, resolution, image = vrep.simxGetVisionSensorImage(
             clientID, kinect_rgb_ID, 0, MODE_INI)
         rc, resolution, depth = vrep.simxGetVisionSensorImage(
             clientID, kinect_depth_ID, 0, MODE_INI)
-        # solve a bug by repeating
         time.sleep(0.5)
-        rc, resolution, image = vrep.simxGetVisionSensorImage(
-            clientID, kinect_rgb_ID, 0, MODE_INI)
-        rc, resolution, depth = vrep.simxGetVisionSensorImage(
-            clientID, kinect_depth_ID, 0, MODE_INI)
+
+#        # solve a bug by repeating      
+#        rc, resolution, image = vrep.simxGetVisionSensorImage(
+#            clientID, kinect_rgb_ID, 0, MODE_INI)
+#        rc, resolution, depth = vrep.simxGetVisionSensorImage(
+#            clientID, kinect_depth_ID, 0, MODE_INI)
+#        time.sleep(0.5)
+            
         #im = np.array(image, dtype=np.uint8)
         #im.resize([resolution[1], resolution[0], 3])
         # plt.imshow(im, origin='lower')
         # return_code, resolution, depth = vrep.simxGetVisionSensorImage(
         #     clientID, kinect_depth_ID, 0, MODE_INI)
         # de = np.array(depth)
-        time.sleep(0.5)
     return
     
 
@@ -189,15 +209,22 @@ def get_mobilebase_pose2d():
     return pos
     
 
+""" return an array of distances measured by ultrasonic sensors (m) """
 def get_distance_obstacle():
-    """ return an array of distances measured by lasers (m) """
-    for i in range(0, N_LASERS):
+    for i in range(0, N_Ultrasonic):
         rc, ds, detected_point, doh, dsn = vrep.simxReadProximitySensor(
-            clientID, laserID[i], MODE)
+            clientID, ultrasonicID[i], MODE)
         distance[i] = detected_point[2]
     return distance
 
 
+def get_goal_pose_2d():
+    """ Returns the position of the goal object:  [ x(m), y(m), z(m) ] """
+    rc, pos = vrep.simxGetObjectPosition(clientID, goalID, -1, MODE)
+    pos = np.array([pos[0], pos[1]])
+    return pos
+
+    
 """ move the wheels. Input: Angular velocities in rad/s """
 def move_wheels(v_left, v_right):
     vrep.simxSetJointTargetVelocity(clientID, left_motorID, v_left, STREAMING)

@@ -19,6 +19,10 @@ ONESHOT = vrep.simx_opmode_oneshot
 STREAMING = vrep.simx_opmode_streaming
 BUFFER = vrep.simx_opmode_buffer
 
+N_Ultrasonic = 16
+ultrasonicID = [-1]*N_Ultrasonic
+distance=np.full(N_Ultrasonic, -1, dtype=np.float64)
+
 ip = '127.0.0.1'
 port = 19997
 vrep.simxFinish(-1)  # just in case, close all opened connections
@@ -34,9 +38,27 @@ print('Connected to Robot')
 vrep.simxStopSimulation(clientID, ONESHOT)
 vrep.simxStartSimulation(clientID, ONESHOT)
 
+# setup robot components
+for idx in range(0, N_Ultrasonic):
+    item = 'ultrasonicSensor' + str(idx+1)
+    rc, ultrasonicID[idx] = vrep.simxGetObjectHandle(clientID, item, WAIT)
+    
 rc, kinect_rgb_ID = vrep.simxGetObjectHandle(clientID, 'kinect_rgb', WAIT)
 rc, kinect_depth_ID = vrep.simxGetObjectHandle(clientID, 'kinect_depth', WAIT)
 
+# send and receive components data
+for i in range(0, N_Ultrasonic):
+    rc, ds, detected_point, doh, dsn = vrep.simxReadProximitySensor(
+        clientID, ultrasonicID[i], STREAMING)
+    distance[i] = detected_point[2]
+print(distance)
+time.sleep(0.5)
+for i in range(0, N_Ultrasonic):
+    rc, ds, detected_point, doh, dsn = vrep.simxReadProximitySensor(
+        clientID, ultrasonicID[i], STREAMING)
+    distance[i] = detected_point[2]
+print(distance)
+    
 rc, resolution, image = vrep.simxGetVisionSensorImage(clientID, kinect_depth_ID, 0, STREAMING)
 time.sleep(0.5)
 rc, resolution, image = vrep.simxGetVisionSensorImage(clientID, kinect_depth_ID, 0, STREAMING)

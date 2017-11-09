@@ -13,6 +13,7 @@ import numpy as np
 # Basic parameters -------------------------------------------------------
 TASK_ID = "hallway" # Select a scenario
 ENVIRONMENT_TYPE = "VREP" # Select an experiment platform: VREP or ROS
+SENSOR_TYPE = "KINECT" # Select a sensory input: KINECT or LASER
 SPEED_RATE = 3.0 # Recommended: VREP: 3.0 (x3); REAL ROBOT: 1.0 (x1)
 
 N_REPETITIONS = 1  # Number of repetitions of the experiment

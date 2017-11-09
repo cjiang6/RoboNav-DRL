@@ -24,7 +24,7 @@ path = None  # Save path (including prefix of filename)
 
 def new_dir(results_path, caption):
     """ Create directory in which results will be saved """
-    global path
+    #global path
 
     if not os.path.exists(results_path):
         os.makedirs(results_path)
@@ -33,22 +33,22 @@ def new_dir(results_path, caption):
     if not os.path.exists(folder):
         os.makedirs(folder)
     path = folder + "/" + caption
+    return path
 
-
-def simple(data, suffix):
-    """ Save 'data' in file 'filename'. If the data is a numpy array, it is
-    saved as binary (.npy) """
-    filename = path + "_" + suffix if suffix else path
-    if suffix:
-        filename += "_" + suffix
-    if type(data) is np.ndarray:
-        np.save(filename, data)
-    else:
-        filename += ".py"
-        with open(filename, 'w') as f:
-            f.write(data)
-
-
+#def simple(data, suffix):
+#    """ Save 'data' in file 'filename'. If the data is a numpy array, it is
+#    saved as binary (.npy) """
+#    filename = path + "_" + suffix if suffix else path
+#    if suffix:
+#        filename += "_" + suffix
+#    if type(data) is np.ndarray:
+#        np.save(filename, data)
+#    else:
+#        filename += ".py"
+#        with open(filename, 'w') as f:
+#            f.write(data)
+#
+#
 #def log(mean_ave_r, mean_actual_step_time):
 #    """ Save logfile (textfile)"""
 #
