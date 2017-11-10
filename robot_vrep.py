@@ -101,7 +101,6 @@ def start():
     # Solve a rare bug in the simulator by repeating:
     setup_devices()
     vrep.simxStartSimulation(clientID, ONESHOT)
-    print('Simulation started')
     time.sleep(0.5)
     return
     

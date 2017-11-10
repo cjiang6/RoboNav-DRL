@@ -22,24 +22,26 @@ RANGE_COLL = 0.08 # minimum distance to obstacles (m)
 RANGE_GOAL = 0.1 # minimum distance for which goal is considered being reached
 
 
-# Task goal (rewards):
+""" Task goal (rewards) """
 REWARD = np.array([10, 2.5, -10])
 def get_reward():
     dist_to_goal = robot.dist_goal
     last_dist_to_goal = robot.last_dist_goal
     dist_to_obs = min(robot.dist_obstacle)
     
+    # Goal related 
     if dist_to_goal < RANGE_GOAL:
         r1 = max(REWARD)
     else:
         r1 = (last_dist_to_goal - dist_to_goal) * REWARD[1]
-        
+    
+    # Collision related    
     if dist_to_obs < RANGE_COLL:
         r2 = min(REWARD)
     else:
         r2 = 0
         
-    r = r1 + r2
+    r = r1 + r2 # sum
     
     return r
     

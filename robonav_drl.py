@@ -46,29 +46,26 @@ def run():
     task.setup()
     
     caption = (expset.TASK_ID)
-#    if expset.SUFFIX:
-#        caption += "_" + expset.SUFFIX
-
     path = save.new_dir(results_path, caption)  # Create result directory
 
-    epi = 0
-    # Average Reward per step (aveR):
-    ave_r = np.zeros((expset.N_REPETITIONS, expset.N_STEPS))
-    # Mean(aveR) of all tests per step
-    mean_ave_r = np.zeros(expset.N_STEPS)
-    # AveR per episode
-    epi_ave_r = np.zeros([expset.N_REPETITIONS, expset.N_EPISODES])
-    # actual step time per episode (for computational cost only)
-    actual_step_time = np.zeros(expset.N_REPETITIONS)
+#    epi = 0
+#    # Average Reward per step (aveR):
+#    ave_r = np.zeros((expset.N_REPETITIONS, expset.N_STEPS))
+#    # Mean(aveR) of all tests per step
+#    mean_ave_r = np.zeros(expset.N_STEPS)
+#    # AveR per episode
+#    epi_ave_r = np.zeros([expset.N_REPETITIONS, expset.N_EPISODES])
+#    # actual step time per episode (for computational cost only)
+#    actual_step_time = np.zeros(expset.N_REPETITIONS)
     
     robot.connect()  # Connect to V-REP / ROS
 
-    if expset.CONTINUE_PREVIOUS_EXP:
-        prev_exp = __import__(expset.PREVIOUS_EXP_FILE)
-        print("NOTE: Continue experiments from: " + expset.PREVIOUS_EXP_FILE)
-        time.sleep(3)
+#    if expset.CONTINUE_PREVIOUS_EXP:
+#        prev_exp = __import__(expset.PREVIOUS_EXP_FILE)
+#        print("NOTE: Continue experiments from: " + expset.PREVIOUS_EXP_FILE)
+#        time.sleep(3)
         
-    # Experiment repetition loop ------------------------------------------
+    # Experiment repetition loop --------------------------------------------
     for rep in range(expset.N_REPETITIONS):
         
         # Training parameters
@@ -111,7 +108,8 @@ def run():
                 
         # Create lists for counting         
         stepList = [] # List of total steps of each epi
-        rList = [] # list of total rewards of each epi
+        rAllList = [] # List of total rewards of each epi
+        rAveList = [] # List of average reward of each epi 
         total_steps = 0 # Count total steps of each repetition
         
         
@@ -133,11 +131,12 @@ def run():
                 episodeBuffer = experience_buffer()            
                 s = robot.get_observation()
                                 
-                rAll = 0.0 # total reward per each episode
+                rAll = 0.0 # total reward per episode
+                rAve = 0.0 # average reward per episode
                 d = False # if reach the destination
                 
                 step_time = task.STEP_TIME / expset.SPEED_RATE # set delay for each step (s)
-                actual_step_time = 0 # calculate actual time elapsed for each step (s)
+                actual_step_time = 0.0 # calculate actual time elapsed for each step (s)
                 time_mark = time.time() # start timestamp                
                 
                 for step in range(0, expset.N_STEPS):
@@ -146,7 +145,7 @@ def run():
                     else:
                         a = sess.run(mainQN.predict,feed_dict={mainQN.observation:np.expand_dims(s, axis=0)})[0]
                                
-                    print("Action at timestep " + str(step+1) + ": " + str(a))
+                    print("action at step " + str(step+1) + ": " + action_dic[str(a)])
                             
                     # Update robot motion
                     move_direction = action_dic[str(a)]
@@ -198,14 +197,19 @@ def run():
                     if d == True: # End the episode if destination is reached
                         break
                     
-                    print("Reward at timestep " + str(step+1) + ": " + str(r))
+                    print("reward at step " + str(step+1) + ": " + str(r))
+                    print(" "*10)
                 # End of one episode ---------------------------------------
                 
-                actual_step_time = (time.time() - time_mark) / (step + 1)                
-                print(actual_step_time)
+                rAve = rAll / (step + 1)                
+                actual_step_time = (time.time() - time_mark) / (step + 1)
+
+                show.epi_summary(caption, rep, epi, step+1, rAll, rAve, actual_step_time)                
+                
                 myBuffer.add(episodeBuffer.buffer)
                 stepList.append(step+1)
-                rList.append(rAll)
+                rAllList.append(rAll)
+                rAveList.append(rAve)
                 
                 # Periodically save the model
                 if epi % 1000 == 0:
@@ -214,7 +218,7 @@ def run():
             
             saver.save(sess, path + '/model-' + str(epi) + '.ckpt')
             
-            # End of one repetition
+    # End of one repetition -------------------------------------------------
                 
                 
                 
