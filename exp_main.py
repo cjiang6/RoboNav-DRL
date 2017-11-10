@@ -17,6 +17,7 @@ expset.SENSOR_TYPE = "KINECT"
 expset.N_REPETITIONS = 1
 expset.N_EPISODES = 10000
 expset.N_STEPS = 60*60 
+expset.SPEED_RATE = 3.0
 
 expset.DISPLAY_STEP = 10
 

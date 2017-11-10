@@ -136,13 +136,17 @@ def run():
                 rAll = 0.0 # total reward per each episode
                 d = False # if reach the destination
                 
+                step_time = task.STEP_TIME / expset.SPEED_RATE # set delay for each step (s)
+                actual_step_time = 0 # calculate actual time elapsed for each step (s)
+                time_mark = time.time() # start timestamp                
+                
                 for step in range(0, expset.N_STEPS):
                     if np.random.rand(1) < e or total_steps < pre_train_steps:
                         a = np.random.randint(0,len(action_dic))
                     else:
                         a = sess.run(mainQN.predict,feed_dict={mainQN.observation:np.expand_dims(s, axis=0)})[0]
                                
-                    print("Action is " + str(a) + "at timestep: " + str(step))
+                    print("Action at timestep " + str(step+1) + ": " + str(a))
                             
                     # Update robot motion
                     move_direction = action_dic[str(a)]
@@ -156,12 +160,14 @@ def run():
                         robot.move_wheels(1.5*task.MAX_SPEED, 0.5*task.MAX_SPEED)
                     elif move_direction == 'HALF_LEFT':
                         robot.move_wheels(0.5*task.MAX_SPEED, 1.5*task.MAX_SPEED)
+                    
+                    time.sleep(step_time) # Delay for step_time (s)
                         
                     robot.update()        
                     # Get new observation and reward
                     s1 = robot.get_observation() 
                     r = task.get_reward()
-                    #d = task.reach_dest()                
+                    d = task.reach_goal()                
                     
                     total_steps += 1                    
                     # Save to experience buffer
@@ -192,11 +198,13 @@ def run():
                     if d == True: # End the episode if destination is reached
                         break
                     
-                    print("Finish timestep: " + str(step))
+                    print("Reward at timestep " + str(step+1) + ": " + str(r))
                 # End of one episode ---------------------------------------
-             
+                
+                actual_step_time = (time.time() - time_mark) / (step + 1)                
+                print(actual_step_time)
                 myBuffer.add(episodeBuffer.buffer)
-                stepList.append(step)
+                stepList.append(step+1)
                 rList.append(rAll)
                 
                 # Periodically save the model

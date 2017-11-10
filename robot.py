@@ -27,16 +27,19 @@ mobilebase_pose2d = np.full(3, -1, dtype=np.float64) # Robot pose [x(m), y(m), t
 goal_pose2d = np.full(2,-1, dtype=np.float64) # Goal position [x(m), y(m)]
 dist_obstacle = np.full(link.N_Ultrasonic, -1, dtype=np.float64) # Distance (m) to obstacles measured by ultrasonic sensors
 dist_goal = -1 # Distance (m) from robot to goal
+last_dist_goal = -1 # Distance (m) from robot to goal of last timestep
 
 
 """ Initialize the robot """
 def setup():
-    global mobilebase_pose2d, goal_pose2d, dist_obstacle, dist_goal    
+    global mobilebase_pose2d, goal_pose2d
+    global dist_obstacle, dist_goal, last_dist_goal    
     
     mobilebase_pose2d = np.full(3, -1, dtype=np.float64)
     goal_pose2d = np.full(2, -1, dtype=np.float64)
     dist_obstacle = np.full(link.N_Ultrasonic, -1, dtype=np.float64) 
-    dist_goal = -1 
+    dist_goal = -1
+    last_dist_goal = -1
     # get the first data of the robot and environment
     update()
     return
@@ -56,11 +59,13 @@ def start():
 
 """ Update relavent data of the robot and environment """
 def update():
-    global mobilebase_pose2d, goal_pose2d, dist_obstacle, dist_goal
+    global mobilebase_pose2d, goal_pose2d
+    global dist_obstacle, dist_goal, last_dist_goal
     
     mobilebase_pose2d = get_mobilebase_pose2d()
     goal_pose2d = get_goal_pose_2d()
     dist_obstacle = get_distance_obstacle()
+    last_dist_goal = dist_goal
     dist_goal = distance2d(np.array([mobilebase_pose2d[0], mobilebase_pose2d[1]]), goal_pose2d)
     
 
