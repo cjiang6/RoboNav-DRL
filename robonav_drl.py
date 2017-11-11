@@ -82,7 +82,7 @@ def run():
         anneling_steps = 100000 # How many steps of training to reduce startE to endE.
         num_episodes = 500000 # How many episodes of game environment to train network with.
         
-        pre_train_steps = 50000 # 10000 #How many steps of random actions before training begins.
+        pre_train_steps = 200 # 10000 #How many steps of random actions before training begins.
         simulation_time = 400 # 200 
         max_epLength = 400 # 200 # the same as simulation time
         tau = 0.001 # Rate to update target network toward primary network
@@ -130,7 +130,7 @@ def run():
                 
                 episodeBuffer = experience_buffer()            
                 s = robot.get_observation()
-                                
+                
                 rAll = 0.0 # total reward per episode
                 rAve = 0.0 # average reward per episode
                 d = False # if reach the destination
@@ -179,7 +179,7 @@ def run():
                         if total_steps % (update_freq) == 0:
                             trainBatch = myBuffer.sample(batch_size) # Get a random batch of experiences
                             # Perform the Double-DQN update to the target Q-values
-                            Q1 = sess.run(mainQN.predict, feed_dict={mainQN.observation:np.reshage(np.vstack(trainBatch[:,3]), [batch_size, ob_len, 640])})
+                            Q1 = sess.run(mainQN.predict, feed_dict={mainQN.observation:np.reshape(np.vstack(trainBatch[:,3]), [batch_size, ob_len, 640])})
                             Q2 = sess.run(targetQN.Qout, feed_dict={targetQN.observation:np.reshape(np.vstack(trainBatch[:,3]), [batch_size, ob_len, 640])})
                             end_multiplier =- (trainBatch[:,4] - 1)
                             doubleQ = Q2[range(batch_size), Q1]

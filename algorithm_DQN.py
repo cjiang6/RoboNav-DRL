@@ -40,7 +40,7 @@ class DeepQNetwork():
         # Dueling
         # Do it later
 
-        # full connneted
+        # fully-connneted
         self.W1 = tf.Variable(tf.random_normal([self.convout.get_shape().as_list()[1], fc1_num]))
         self.b1 = tf.Variable(tf.random_normal([fc1_num]))
         self.fc1 = tf.nn.relu( tf.matmul(self.convout, self.W1) + self.b1 ) 
