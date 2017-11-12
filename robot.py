@@ -80,7 +80,7 @@ def distance2d(pose_a, pose_b):
 """ Get visual ovservation from sensor """    
 def get_observation():
     if expset.SENSOR_TYPE == 'KINECT':
-        de = link.get_image_depth()    
+        de = link.get_image_depth()
     elif expset.SENSOR_TYPE == 'LASER':
         pass
     return de

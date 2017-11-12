@@ -8,34 +8,55 @@ Created on Wed Nov  8 11:16:05 2017
 """
 
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
+
 import numpy as np
 import random
+from skimage import transform
 
-import expset
-import lp
+#import expset
+#import lp
 
 class DeepQNetwork():
-    def __init__(self, ob_len, action_size):        
-        # observation input
-        self.observation = tf.placeholder(tf.float32, shape = (None, ob_len, 640) )  
+    def __init__(self, obs_dim1, obs_dim2, action_size):        
+#        # Old version -----------------------------------------------------        
+#        # observation input
+#        self.observation = tf.placeholder(tf.float32, shape = (None, obs_dim1, obs_dim2))
+#                
+#        # Network Parameters
+#        conv1_num = 16
+#        conv2_num = 32
+#        fc1_num = 256
+#
+#        # convolutions acti:relu
+#        self.conv1 = tf.contrib.layers.convolution2d(
+#            inputs=tf.expand_dims(self.observation, 3),
+#            num_outputs = conv1_num,
+#            kernel_size=[8,8], stride=[4,4], padding='VALID', biases_initializer=None)
+#        
+#        self.conv2 = tf.contrib.layers.convolution2d(
+#            inputs=self.conv1,
+#            num_outputs = conv2_num,
+#            kernel_size=[4,4], stride=[2,2], padding='VALID', biases_initializer=None)
+#        
+#        self.convout = tf.contrib.layers.flatten(self.conv2)
+#        # End of Old version ----------------------------------------------
         
+        # Modified version -------------------------------------------------
+        # observation input
+        self.scalarInput = tf.placeholder(shape=[None,obs_dim1*obs_dim2*3], dtype=tf.float32)
+        self.imageIn = tf.reshape(self.scalarInput,shape=[-1,obs_dim1,obs_dim2,3])
         # Network Parameters
         conv1_num = 16
         conv2_num = 32
         fc1_num = 256
-
         # convolutions acti:relu
-        self.conv1 = tf.contrib.layers.convolution2d(
-            inputs=tf.expand_dims(self.observation, 3),
-            num_outputs = conv1_num,
-            kernel_size=[8,8], stride=[4,4], padding='VALID', biases_initializer=None)
-        
-        self.conv2 = tf.contrib.layers.convolution2d(
-            inputs=self.conv1,
-            num_outputs = conv2_num,
-            kernel_size=[4,4], stride=[2,2], padding='VALID', biases_initializer=None)
-        
+        self.conv1 = slim.conv2d(
+            inputs=self.imageIn,num_outputs=conv1_num,kernel_size=[8,8],stride=[4,4],padding='VALID',biases_initializer=None)
+        self.conv2 = slim.conv2d(
+            inputs=self.conv1,num_outputs=conv2_num,kernel_size=[4,4],stride=[2,2],padding='VALID',biases_initializer=None)
         self.convout = tf.contrib.layers.flatten(self.conv2)
+        # End of Modified version ------------------------------------------
         
         # Dueling
         # Do it later
@@ -78,8 +99,9 @@ class experience_buffer():
         return np.reshape(np.array(random.sample(self.buffer,size)),[size,5])
         
 
-def processState(states):
-    return np.reshape(states,[21168])
+def processState(states, dim1, dim2):
+    states = transform.resize(states, (dim1, dim2, 3))
+    return np.reshape(states,[dim1*dim2*3])
     
     
 def updateTargetGraph(tfVars,tau):

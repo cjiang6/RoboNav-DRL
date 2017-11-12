@@ -13,7 +13,6 @@ import time
 from shutil import copyfile
 
 import numpy as np
-
 import tensorflow as tf
 
 import expset
@@ -74,27 +73,28 @@ def run():
                       '2': 'FULL_LEFT', 
                       '3': 'HALF_RIGHT',
                       '4': 'HALF_LEFT'}
-        batch_size = 32 # How many experiences to use for each training step.
+        batch_size = 32#32 # How many experiences to use for each training step.
         update_freq = 4 # How often to perform a training step.
         y = .99 # Discount factor on the target Q-values
         startE = 1 # Starting chance of random action
         endE = 0.1 # Final chance of random action
         anneling_steps = 100000 # How many steps of training to reduce startE to endE.
-        num_episodes = 500000 # How many episodes of game environment to train network with.
+#        num_episodes = 500000 # How many episodes of game environment to train network with.
         
-        pre_train_steps = 200 # 10000 #How many steps of random actions before training begins.
-        simulation_time = 400 # 200 
-        max_epLength = 400 # 200 # the same as simulation time
-        tau = 0.001 # Rate to update target network toward primary network
-        ob_len = 480 # Size of the image of the environment
+        pre_train_steps = 100 # 10000 #How many steps of random actions before training begins.
+#        simulation_time = 400 # 200 
+#        max_epLength = 400 # 200 # the same as simulation time
+        tau = 0.001 # Rate to update target network toward primary network        
+        obs_dim1 = 96 # Size of the visual input
+        obs_dim2 = 128
         action_size = len(action_dic)
-        num_sim_steps = 30000
+#        num_sim_steps = 30000
         load_model = False
         
         # Learning algorithm initialization
         tf.reset_default_graph()
-        mainQN = DeepQNetwork(ob_len, action_size)
-        targetQN = DeepQNetwork(ob_len, action_size)
+        mainQN = DeepQNetwork(obs_dim1, obs_dim2, action_size)
+        targetQN = DeepQNetwork(obs_dim1, obs_dim2, action_size)
         init = tf.global_variables_initializer()
         saver = tf.train.Saver()
         trainables = tf.trainable_variables()
@@ -130,6 +130,7 @@ def run():
                 
                 episodeBuffer = experience_buffer()            
                 s = robot.get_observation()
+                s = algorithm_DQN.processState(s, obs_dim1, obs_dim2) # added for DQN version 2
                 
                 rAll = 0.0 # total reward per episode
                 rAve = 0.0 # average reward per episode
@@ -143,8 +144,8 @@ def run():
                     if np.random.rand(1) < e or total_steps < pre_train_steps:
                         a = np.random.randint(0,len(action_dic))
                     else:
-                        a = sess.run(mainQN.predict,feed_dict={mainQN.observation:np.expand_dims(s, axis=0)})[0]
-                               
+#                        a = sess.run(mainQN.predict,feed_dict={mainQN.observation:np.expand_dims(s, axis=0)})[0]
+                        a = sess.run(mainQN.predict,feed_dict={mainQN.scalarInput:[s]})[0] # added for DQN version 2       
                     print("action at step " + str(step+1) + ": " + action_dic[str(a)])
                             
                     # Update robot motion
@@ -164,7 +165,8 @@ def run():
                         
                     robot.update()        
                     # Get new observation and reward
-                    s1 = robot.get_observation() 
+                    s1 = robot.get_observation()                    
+                    s1 = algorithm_DQN.processState(s1, obs_dim1, obs_dim2) # added for DQN version 2
                     r = task.get_reward()
                     d = task.reach_goal()                
                     
@@ -179,15 +181,20 @@ def run():
                         if total_steps % (update_freq) == 0:
                             trainBatch = myBuffer.sample(batch_size) # Get a random batch of experiences
                             # Perform the Double-DQN update to the target Q-values
-                            Q1 = sess.run(mainQN.predict, feed_dict={mainQN.observation:np.reshape(np.vstack(trainBatch[:,3]), [batch_size, ob_len, 640])})
-                            Q2 = sess.run(targetQN.Qout, feed_dict={targetQN.observation:np.reshape(np.vstack(trainBatch[:,3]), [batch_size, ob_len, 640])})
+#                            Q1 = sess.run(mainQN.predict, feed_dict={mainQN.observation:np.reshape(np.vstack(trainBatch[:,3]), [batch_size, obs_dim1, obs_dim2])})
+#                            Q2 = sess.run(targetQN.Qout, feed_dict={targetQN.observation:np.reshape(np.vstack(trainBatch[:,3]), [batch_size, obs_dim1, obs_dim2])})
+                            Q1 = sess.run(mainQN.predict,feed_dict={mainQN.scalarInput:np.vstack(trainBatch[:,3])}) # added for DQN version 2
+                            Q2 = sess.run(targetQN.Qout,feed_dict={targetQN.scalarInput:np.vstack(trainBatch[:,3])}) # added for DQN version 2                           
                             end_multiplier =- (trainBatch[:,4] - 1)
                             doubleQ = Q2[range(batch_size), Q1]
                             targetQ = trainBatch[:,2] + (y*doubleQ * end_multiplier)
                             # Update the network with our target values
-                            _ = sess.run(mainQN.updateModel, feed_dict={ mainQN.observation:np.reshape(np.vstack(trainBatch[:,0]), [batch_size, ob_len, 640]),
-                                                                         mainQN.targetQ:targetQ,
-                                                                         mainQN.actions:trainBatch[:,1]})
+#                            _ = sess.run(mainQN.updateModel, feed_dict={ mainQN.observation:np.reshape(np.vstack(trainBatch[:,0]), [batch_size, obs_dim1, obs_dim2]),
+#                                                                         mainQN.targetQ:targetQ,
+#                                                                         mainQN.actions:trainBatch[:,1]})
+                            _ = sess.run(mainQN.updateModel, feed_dict={mainQN.scalarInput:np.vstack(trainBatch[:,0]),
+                                                                        mainQN.targetQ:targetQ, 
+                                                                        mainQN.actions:trainBatch[:,1]}) # added for DQN version 2
                             # Update the target network toward the primary network
                             algorithm_DQN.updateTarget(targetOps, sess)
                             
@@ -198,6 +205,7 @@ def run():
                         break
                     
                     print("reward at step " + str(step+1) + ": " + str(r))
+                    print("total steps: " + str(total_steps))
                     print(" "*10)
                 # End of one episode ---------------------------------------
                 

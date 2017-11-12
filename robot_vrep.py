@@ -14,13 +14,9 @@ import expset
 import vrep
 
 WAIT_RESPONSE = False  # True: Synchronous response (too much delay)
-
-#LASER_DISTRIBUTION = ('sensor_front', 'sensor_front_left', 'sensor_left',
-#                      'sensor_rear_left', 'sensor_rear', 'sensor_rear_right',
-#                      'sensor_right', 'sensor_front_right')
-
 HAS_LASER = False
 HAS_KINECT = False
+
 if expset.SENSOR_TYPE == 'LASER':
     HAS_LASER = True
 elif expset.SENSOR_TYPE == 'KINECT':
@@ -196,7 +192,7 @@ def get_image_depth():
         clientID, kinect_depth_ID, 0, MODE)    
     #de = np.array(depth)
     de = np.array(depth, dtype=np.uint8)
-    de.resize([resolution[1], resolution[0], 3])
+    de.resize([resolution[1], resolution[0], 3])    
     return de
 
 

@@ -8,7 +8,7 @@ Created on Fri Nov  3 11:13:50 2017
 """
 
 import time
-import numpy as np
+#import numpy as np
 
 # Basic parameters -------------------------------------------------------
 TASK_ID = "hallway" # Select a scenario

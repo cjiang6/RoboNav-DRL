@@ -19,7 +19,7 @@ ROBOT = "Pioneer 3DX with laser or Kinect"
 STEP_TIME = 1 # (s)
 MAX_SPEED = 2 # maximum motor speed (m/s)
 RANGE_COLL = 0.08 # minimum distance to obstacles (m)
-RANGE_GOAL = 0.1 # minimum distance for which goal is considered being reached
+RANGE_GOAL = 0.1 # minimum distance for which goal is considered being reached (m)
 
 
 """ Task goal (rewards) """
