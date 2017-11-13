@@ -67,7 +67,11 @@ def update():
     dist_obstacle = get_distance_obstacle()
     last_dist_goal = dist_goal
     dist_goal = distance2d(np.array([mobilebase_pose2d[0], mobilebase_pose2d[1]]), goal_pose2d)
-    
+#    print("Robot position: " + "[" + str(mobilebase_pose2d[0]), str(mobilebase_pose2d[1]), "]")
+#    print("Goal position: " + "[" + str(goal_pose2d[0]), str(goal_pose2d[1]), "]")
+#    print("Distance to obstacle: %s" %(min(dist_obstacle)))
+#    print("Distance to goal: " + str(dist_goal))
+#    print("Last distance to goal: " + str(last_dist_goal))
 
 """ Calculate 2D distance between two pose """
 def distance2d(pose_a, pose_b):

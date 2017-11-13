@@ -81,7 +81,7 @@ def run():
         anneling_steps = 100000 # How many steps of training to reduce startE to endE.
 #        num_episodes = 500000 # How many episodes of game environment to train network with.
         
-        pre_train_steps = 100 # 10000 #How many steps of random actions before training begins.
+        pre_train_steps = 350 # 10000 #How many steps of random actions before training begins.
 #        simulation_time = 400 # 200 
 #        max_epLength = 400 # 200 # the same as simulation time
         tau = 0.001 # Rate to update target network toward primary network        

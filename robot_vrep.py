@@ -132,9 +132,9 @@ def setup_devices():
         rc, kinect_depth_ID = vrep.simxGetObjectHandle(
             clientID, 'kinect_depth', WAIT)
     # goal
-    rc, goalID = vrep.simxGetObjectHandle(clientID, 'Ball', WAIT)
+    rc, goalID = vrep.simxGetObjectHandle(clientID, 'Goal', WAIT)
     
-    # start up devices
+    # Start up devices and objects
     # wheels
     vrep.simxSetJointTargetVelocity(clientID, left_motorID, 0, STREAMING)
     vrep.simxSetJointTargetVelocity(clientID, right_motorID, 0, STREAMING)
@@ -157,6 +157,9 @@ def setup_devices():
         rc, resolution, depth = vrep.simxGetVisionSensorImage(
             clientID, kinect_depth_ID, 0, MODE_INI)
         time.sleep(0.5)
+        
+    #goal    
+    vrep.simxGetObjectPosition(clientID, goalID, -1, MODE_INI)
 
 #        # solve a bug by repeating      
 #        rc, resolution, image = vrep.simxGetVisionSensorImage(
@@ -209,7 +212,10 @@ def get_distance_obstacle():
     for i in range(0, N_Ultrasonic):
         rc, ds, detected_point, doh, dsn = vrep.simxReadProximitySensor(
             clientID, ultrasonicID[i], MODE)
-        distance[i] = detected_point[2]
+        if ds == 1:
+            distance[i] = detected_point[2]
+        else:
+            distance[i] = float('inf')        
     return distance
 
 

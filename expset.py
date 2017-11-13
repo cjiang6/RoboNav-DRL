@@ -17,7 +17,7 @@ SENSOR_TYPE = "KINECT" # Select a sensory input: KINECT or LASER
 SPEED_RATE = 3.0 # Recommended: VREP: 3.0 (x3); REAL ROBOT: 1.0 (x1)
 
 N_REPETITIONS = 1  # Number of repetitions of the experiment
-N_EPISODES = 100  # >1 for episodic experiments: Uses arrays from previous epi
+N_EPISODES = 10000  # >1 for episodic experiments: Uses arrays from previous epi
 N_STEPS = 60 * 60  # Number of steps in each epi: 1 step ~ 1 second (Sets LE.N_STEPS)
 
 CONTINUE_PREVIOUS_EXP = False
