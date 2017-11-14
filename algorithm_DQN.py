@@ -19,7 +19,7 @@ from skimage import transform
 
 class DeepQNetwork():
     def __init__(self, obs_dim1, obs_dim2, action_size):        
-#        # Old version -----------------------------------------------------        
+#        ######################## Old version -#########################        
 #        # observation input
 #        self.observation = tf.placeholder(tf.float32, shape = (None, obs_dim1, obs_dim2))
 #                
@@ -40,28 +40,47 @@ class DeepQNetwork():
 #            kernel_size=[4,4], stride=[2,2], padding='VALID', biases_initializer=None)
 #        
 #        self.convout = tf.contrib.layers.flatten(self.conv2)
-#        # End of Old version ----------------------------------------------
+#        # -------------------- End of Old version -------------------------
         
-        # Modified version -------------------------------------------------
-        # observation input
+#        ###################### Modified version 1 ##########################
+#        # observation input
+#        self.scalarInput = tf.placeholder(shape=[None,obs_dim1*obs_dim2*3], dtype=tf.float32)
+#        self.imageIn = tf.reshape(self.scalarInput,shape=[-1,obs_dim1,obs_dim2,3])
+#        # Network Parameters
+#        conv1_num = 16
+#        conv2_num = 32
+#        fc1_num = 256
+#        # convolutions acti
+#        self.conv1 = slim.conv2d(
+#            inputs=self.imageIn,num_outputs=conv1_num,kernel_size=[8,8],stride=[4,4],padding='VALID',biases_initializer=None)
+#        self.conv2 = slim.conv2d(
+#            inputs=self.conv1,num_outputs=conv2_num,kernel_size=[4,4],stride=[2,2],padding='VALID',biases_initializer=None)
+#        self.convout = tf.contrib.layers.flatten(self.conv2)
+#        # ----------------- End of Modified version 1 ------------------------
+        
+        
+        ###################### Modified version 2 (incl. goal info)##########################
+        # observation and goal info input
         self.scalarInput = tf.placeholder(shape=[None,obs_dim1*obs_dim2*3], dtype=tf.float32)
         self.imageIn = tf.reshape(self.scalarInput,shape=[-1,obs_dim1,obs_dim2,3])
+        self.goalInput = tf.placeholder(shape=[None,2], dtype=tf.float32)
         # Network Parameters
         conv1_num = 16
         conv2_num = 32
         fc1_num = 256
-        # convolutions acti:relu
+        # convolutions acti
         self.conv1 = slim.conv2d(
             inputs=self.imageIn,num_outputs=conv1_num,kernel_size=[8,8],stride=[4,4],padding='VALID',biases_initializer=None)
         self.conv2 = slim.conv2d(
             inputs=self.conv1,num_outputs=conv2_num,kernel_size=[4,4],stride=[2,2],padding='VALID',biases_initializer=None)
-        self.convout = tf.contrib.layers.flatten(self.conv2)
-        # End of Modified version ------------------------------------------
+        #self.convout = tf.contrib.layers.flatten(self.conv2)
+        self.convout = tf.concat([tf.contrib.layers.flatten(self.conv2), self.goalInput], 1)
+        # ----------------- End of Modified version 2 ----------------------
         
         # Dueling
         # Do it later
 
-        # fully-connected
+        # Fully-connected
         self.W1 = tf.Variable(tf.random_normal([self.convout.get_shape().as_list()[1], fc1_num]))
         self.b1 = tf.Variable(tf.random_normal([fc1_num]))
         self.fc1 = tf.nn.relu( tf.matmul(self.convout, self.W1) + self.b1 ) 
@@ -96,7 +115,8 @@ class experience_buffer():
         self.buffer.extend(experience)
             
     def sample(self,size):
-        return np.reshape(np.array(random.sample(self.buffer,size)),[size,5])
+#        return np.reshape(np.array(random.sample(self.buffer,size)),[size,5])
+        return np.reshape(np.array(random.sample(self.buffer,size)),[size,7]) # added for DQN version 2
         
 
 def processState(states, dim1, dim2):

@@ -160,6 +160,7 @@ def setup_devices():
         
     #goal    
     vrep.simxGetObjectPosition(clientID, goalID, -1, MODE_INI)
+    vrep.simxGetObjectPosition(clientID, goalID, robotID, MODE_INI)
 
 #        # solve a bug by repeating      
 #        rc, resolution, image = vrep.simxGetVisionSensorImage(
@@ -219,9 +220,16 @@ def get_distance_obstacle():
     return distance
 
 
+""" Returns the position of the goal object:  [ x(m), y(m) ] """
 def get_goal_pose_2d():
-    """ Returns the position of the goal object:  [ x(m), y(m), z(m) ] """
     rc, pos = vrep.simxGetObjectPosition(clientID, goalID, -1, MODE)
+    pos = np.array([pos[0], pos[1]])
+    return pos
+    
+
+""" Returns the relative position of the goal object to the robot:  [ x(m), y(m) ] """
+def get_goal_relpose_2d():
+    rc, pos = vrep.simxGetObjectPosition(clientID, goalID, robotID, MODE)
     pos = np.array([pos[0], pos[1]])
     return pos
 
